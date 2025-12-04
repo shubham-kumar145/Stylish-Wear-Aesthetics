@@ -3,7 +3,7 @@ const cloudinary = require("cloudinary").v2 //3
 
 cloudinary.config({
     cloud_name: process.env.CLOUD_NAME,
-    api_key: process.env.API_KEY,
+    api_key: process.env.API_KEY1,
     api_secret: process.env.API_SECRET 
 });
 const addProduct = async (req, res) => {
@@ -148,5 +148,6 @@ const getProductByid = async (req, res) => {
         res.status(500).send("ERROR: ", +err)
     }
 }
+
 
 module.exports = { addProduct, deleteproduct, getAllProduct, updateProductDetails, getProductByid }
