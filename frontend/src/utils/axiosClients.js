@@ -1,7 +1,7 @@
 import axios from "axios"
 
 const axiosClient =  axios.create({
-    baseURL: ' https://stylish-wear-aesthetics-swa.onrender.com',
+    baseURL: 'https://stylish-wear-aesthetics-swa.onrender.com',
     withCredentials: true,
     headers: {
         'Content-Type': 'application/json'
@@ -10,5 +10,6 @@ const axiosClient =  axios.create({
 
 
 export default axiosClient;
+
 
 
