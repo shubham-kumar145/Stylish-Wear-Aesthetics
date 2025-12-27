@@ -1,0 +1,70 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
+/* Custom Scrollbar */
+.scrollbar-custom {
+  scrollbar-width: thin;
+  /* Firefox */
+  scrollbar-color: #a0aec0 #edf2f7;
+  /* Firefox */
+
+  /* Chrome, Edge, Safari */
+}
+
+.scrollbar-custom::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-track {
+  background: #edf2f7;
+  /* light gray track */
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb {
+  background-color: #a0aec0;
+  /* gray thumb */
+  border-radius: 4px;
+  border: 2px solid #edf2f7;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb:hover {
+  background-color: #718096;
+  /* darker on hover */
+}
+
+/* 
+@keyframes scroll {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-scroll {
+  animation: scroll 45s linear infinite;
+} */
+
+@keyframes fadeInOut {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  10% {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+
+  90% {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.animate-fade {
+  animation: fadeInOut 4s ease-in-out;
+}
