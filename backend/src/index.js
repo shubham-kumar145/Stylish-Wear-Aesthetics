@@ -60,10 +60,19 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
+// app.use(cors({
+//     origin: "https://stylish-wear-aesthetics.vercel.app",
+//     credentials: true
+// }));
 app.use(cors({
     origin: "https://stylish-wear-aesthetics.vercel.app",
-    credentials: true
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+app.options("*", cors());
+
 
 app.use(fileUpload({
     useTempFiles: true
@@ -92,3 +101,4 @@ const initializeConnection = async () => {
 };
 
 initializeConnection();
+
