@@ -277,17 +277,17 @@
 
 
 // module.exports = { register, login, logout, adminRegister, deleteprofile, getAllMember }
-
 const redisClient = require("../config/redis");
 const User = require("../model/user");
 const validate = require("../utils/validator");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+/* ✅ COOKIE OPTIONS (RENDER + VERCEL SAFE) */
 const COOKIE_OPTIONS = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: true,       // HTTPS (Render)
+    sameSite: "none",   // REQUIRED for cross-origin cookies
     maxAge: 60 * 60 * 1000
 };
 
@@ -388,11 +388,9 @@ const logout = async (req, res) => {
 };
 
 /* ================= ADMIN REGISTER ================= */
-// ⚠️ MUST be protected by admin middleware
 const adminRegister = async (req, res) => {
     try {
         validate(req.body);
-
         req.body.password = await bcrypt.hash(req.body.password, 10);
 
         const user = await User.create(req.body);
