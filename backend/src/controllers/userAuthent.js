@@ -1,162 +1,182 @@
 
-
-
 const redisClient = require("../config/redis");
 const User = require("../model/user");
-const validate = require("../utils/validator");
+const validate = require("../utlis/valitator");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-/* COOKIE OPTIONS – RENDER + VERCEL SAFE */
-const COOKIE_OPTIONS = {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    maxAge: 60 * 60 * 1000
+/* ================= COOKIE CONFIG ================= */
+const cookieOptions = {
+  httpOnly: true,
+  secure: true,        // REQUIRED on Render
+  sameSite: "None",    // REQUIRED for cross-origin
+  maxAge: 60 * 60 * 1000,
 };
 
 /* ================= REGISTER ================= */
 const register = async (req, res) => {
-    try {
-        validate(req.body);
+  try {
+    validate(req.body);
 
-        req.body.password = await bcrypt.hash(req.body.password, 10);
-        req.body.role = "user";
+    const { password } = req.body;
+    req.body.password = await bcrypt.hash(password, 10);
+    req.body.role = "user";
 
-        const user = await User.create(req.body);
+    const user = await User.create(req.body);
 
-        const token = jwt.sign(
-            { _id: user._id, emailId: user.emailId, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES }
-        );
+    const reply = {
+      firstName: user.firstName,
+      emailId: user.emailId,
+      _id: user._id,
+      role: user.role,
+    };
 
-        res.cookie("token", token, COOKIE_OPTIONS);
+    const token = jwt.sign(
+      { _id: user._id, emailId: user.emailId, role: "user" },
+      process.env.JWT_SECRET || "wsac",
+      { expiresIn: "1h" }
+    );
 
-        res.status(201).json({
-            user: {
-                _id: user._id,
-                firstName: user.firstName,
-                emailId: user.emailId,
-                role: user.role
-            },
-            message: "User created successfully"
-        });
-    } catch (err) {
-        res.status(400).json({ message: err.message });
-    }
+    res.cookie("token", token, cookieOptions);
+
+    res.status(201).json({
+      user: reply,
+      message: "User created successfully",
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 };
 
 /* ================= LOGIN ================= */
 const login = async (req, res) => {
-    try {
-        const { emailId, password } = req.body;
-        if (!emailId || !password) {
-            return res.status(400).json({ message: "Invalid credentials" });
-        }
+  try {
+    const { emailId, password } = req.body;
 
-        const user = await User.findOne({ emailId });
-        if (!user) {
-            return res.status(401).json({ message: "Invalid credentials" });
-        }
-
-        const match = await bcrypt.compare(password, user.password);
-        if (!match) {
-            return res.status(401).json({ message: "Invalid credentials" });
-        }
-
-        const token = jwt.sign(
-            { _id: user._id, emailId: user.emailId, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES }
-        );
-
-        res.cookie("token", token, COOKIE_OPTIONS);
-
-        res.status(200).json({
-            user: {
-                _id: user._id,
-                firstName: user.firstName,
-                emailId: user.emailId,
-                role: user.role
-            },
-            message: "Logged in successfully"
-        });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+    if (!emailId || !password) {
+      return res.status(401).json({ error: "Invalid Credentials" });
     }
+
+    const user = await User.findOne({ emailId });
+    if (!user) {
+      return res.status(401).json({ error: "Invalid Credentials" });
+    }
+
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res.status(401).json({ error: "Invalid Credentials" });
+    }
+
+    const reply = {
+      firstName: user.firstName,
+      emailId: user.emailId,
+      _id: user._id,
+      role: user.role,
+    };
+
+    const token = jwt.sign(
+      { _id: user._id, emailId: user.emailId, role: user.role },
+      process.env.JWT_SECRET || "wsac",
+      { expiresIn: "1h" }
+    );
+
+    res.cookie("token", token, cookieOptions);
+
+    res.status(200).json({
+      user: reply,
+      message: "Logged in successfully",
+    });
+  } catch (err) {
+    res.status(401).json({ error: err.message });
+  }
 };
 
 /* ================= LOGOUT ================= */
 const logout = async (req, res) => {
-    try {
-        const token = req.cookies?.token;
-        if (!token) {
-            return res.status(200).json({ message: "Already logged out" });
-        }
+  try {
+    const token = req.cookies?.token;
+    if (!token) return res.status(200).send("Already logged out");
 
-        const payload = jwt.verify(token, process.env.JWT_SECRET);
-
-        await redisClient.set(`token:${token}`, "blocked");
-        await redisClient.expireAt(`token:${token}`, payload.exp);
-
-        res.clearCookie("token", COOKIE_OPTIONS);
-        res.status(200).json({ message: "Logged out successfully" });
-    } catch (err) {
-        res.status(401).json({ message: "Logout failed" });
+    const payload = jwt.decode(token);
+    if (payload) {
+      await redisClient.set(`token:${token}`, "Blocked");
+      await redisClient.expireAt(`token:${token}`, payload.exp);
     }
+
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+    });
+
+    res.status(200).send("Logged out successfully");
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 };
 
 /* ================= ADMIN REGISTER ================= */
 const adminRegister = async (req, res) => {
-    try {
-        validate(req.body);
+  try {
+    validate(req.body);
 
-        req.body.password = await bcrypt.hash(req.body.password, 10);
-        const user = await User.create(req.body);
+    const { password } = req.body;
+    req.body.password = await bcrypt.hash(password, 10);
 
-        res.status(201).json({
-            message: "Admin created successfully",
-            user: {
-                _id: user._id,
-                firstName: user.firstName,
-                emailId: user.emailId,
-                role: user.role
-            }
-        });
-    } catch (err) {
-        res.status(400).json({ message: err.message });
-    }
+    const user = await User.create(req.body);
+
+    const reply = {
+      firstName: user.firstName,
+      emailId: user.emailId,
+      _id: user._id,
+      role: user.role,
+    };
+
+    const token = jwt.sign(
+      { _id: user._id, emailId: user.emailId, role: user.role },
+      process.env.JWT_SECRET || "wsac",
+      { expiresIn: "1h" }
+    );
+
+    res.cookie("token", token, cookieOptions);
+
+    res.status(201).json({
+      user: reply,
+      message: "Admin created successfully",
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 };
 
 /* ================= DELETE PROFILE ================= */
 const deleteprofile = async (req, res) => {
-    try {
-        await User.findByIdAndDelete(req.result._id);
-        res.status(200).json({ message: "Deleted successfully" });
-    } catch (err) {
-        res.status(500).json({ message: "Server error" });
-    }
+  try {
+    const userId = req.result._id;
+    await User.findByIdAndDelete(userId);
+    res.status(200).send("Deleted Successfully");
+  } catch (err) {
+    res.status(500).send("Server Error");
+  }
 };
 
 /* ================= GET ALL USERS ================= */
 const getAllMember = async (req, res) => {
-    try {
-        const users = await User.find({})
-            .select("_id firstName emailId mobileNo role");
-        res.status(200).json(users);
-    } catch (err) {
-        res.status(500).json({ message: "Server error" });
-    }
+  try {
+    const users = await User.find({})
+      .select("_id firstName emailId mobileNo role purchage cart");
+
+    res.status(200).json(users);
+  } catch (err) {
+    res.status(500).send("Server Error");
+  }
 };
 
 module.exports = {
-    register,
-    login,
-    logout,
-    adminRegister,
-    deleteprofile,
-    getAllMember
+  register,
+  login,
+  logout,
+  adminRegister,
+  deleteprofile,
+  getAllMember,
 };
-
-
