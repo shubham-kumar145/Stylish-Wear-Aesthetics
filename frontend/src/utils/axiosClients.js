@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: "https://stylish-wear-aesthetics-backend.onrender.com",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -9,3 +9,4 @@ const axiosClient = axios.create({
 });
 
 export default axiosClient;
+
