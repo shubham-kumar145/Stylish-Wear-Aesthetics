@@ -22,7 +22,8 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://swatesting.vercel.app",
+      // "https://swatesting.vercel.app",
+      "https://stylish-wear-aesthetics.vercel.app",
     ],
     credentials: true,
   })
@@ -60,4 +61,5 @@ const initializeConnection = async () => {
 };
 
 initializeConnection();
+
 
