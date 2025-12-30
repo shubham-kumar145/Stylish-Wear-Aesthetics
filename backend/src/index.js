@@ -23,7 +23,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
-      "https://swatesting.vercel.app",
+      "https://stylish-wear-aesthetics-frontend.vercel.app",
     ],
     credentials: true,
   })
